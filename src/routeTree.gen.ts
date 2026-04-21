@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SolicitudesRouteImport } from './routes/solicitudes'
+import { Route as PacientesRouteImport } from './routes/pacientes'
 import { Route as HoyRouteImport } from './routes/hoy'
 import { Route as CalendarioRouteImport } from './routes/calendario'
 import { Route as IndexRouteImport } from './routes/index'
@@ -17,6 +18,11 @@ import { Route as IndexRouteImport } from './routes/index'
 const SolicitudesRoute = SolicitudesRouteImport.update({
   id: '/solicitudes',
   path: '/solicitudes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PacientesRoute = PacientesRouteImport.update({
+  id: '/pacientes',
+  path: '/pacientes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HoyRoute = HoyRouteImport.update({
@@ -39,12 +45,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/calendario': typeof CalendarioRoute
   '/hoy': typeof HoyRoute
+  '/pacientes': typeof PacientesRoute
   '/solicitudes': typeof SolicitudesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/calendario': typeof CalendarioRoute
   '/hoy': typeof HoyRoute
+  '/pacientes': typeof PacientesRoute
   '/solicitudes': typeof SolicitudesRoute
 }
 export interface FileRoutesById {
@@ -52,20 +60,22 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/calendario': typeof CalendarioRoute
   '/hoy': typeof HoyRoute
+  '/pacientes': typeof PacientesRoute
   '/solicitudes': typeof SolicitudesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/calendario' | '/hoy' | '/solicitudes'
+  fullPaths: '/' | '/calendario' | '/hoy' | '/pacientes' | '/solicitudes'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/calendario' | '/hoy' | '/solicitudes'
-  id: '__root__' | '/' | '/calendario' | '/hoy' | '/solicitudes'
+  to: '/' | '/calendario' | '/hoy' | '/pacientes' | '/solicitudes'
+  id: '__root__' | '/' | '/calendario' | '/hoy' | '/pacientes' | '/solicitudes'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CalendarioRoute: typeof CalendarioRoute
   HoyRoute: typeof HoyRoute
+  PacientesRoute: typeof PacientesRoute
   SolicitudesRoute: typeof SolicitudesRoute
 }
 
@@ -76,6 +86,13 @@ declare module '@tanstack/react-router' {
       path: '/solicitudes'
       fullPath: '/solicitudes'
       preLoaderRoute: typeof SolicitudesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pacientes': {
+      id: '/pacientes'
+      path: '/pacientes'
+      fullPath: '/pacientes'
+      preLoaderRoute: typeof PacientesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/hoy': {
@@ -106,6 +123,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CalendarioRoute: CalendarioRoute,
   HoyRoute: HoyRoute,
+  PacientesRoute: PacientesRoute,
   SolicitudesRoute: SolicitudesRoute,
 }
 export const routeTree = rootRouteImport
