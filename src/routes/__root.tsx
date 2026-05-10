@@ -1,5 +1,8 @@
-import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
+import { Outlet, Link, createRootRoute, HeadContent, Scripts, redirect, useRouter } from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner";
+import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/lib/supabase";
+import { useEffect } from "react";
 
 import appCss from "../styles.css?url";
 
@@ -25,35 +28,46 @@ function NotFoundComponent() {
   );
 }
 
-export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
-    ],
-    links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
-    ],
-  }),
-  shellComponent: RootShell,
-  component: RootComponent,
-  notFoundComponent: NotFoundComponent,
-});
+function RootComponent() {
+  const { loading, user } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    // Si cambia el estado de usuario (ej. token expira o login en otra pestaña),
+    // invalidamos el enrutador para forzar que beforeLoad corra de nuevo.
+    router.invalidate();
+  }, [user, router]);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="size-12 rounded-full border-4 border-indigo-500/20 border-t-indigo-500 animate-spin" />
+          <p className="text-zinc-400 font-medium animate-pulse">Cargando TurnoDental...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <Outlet />
+      <Toaster richColors position="top-right" />
+    </>
+  );
+}
+
+function Main() {
+  return (
+    <AuthProvider>
+      <RootComponent />
+    </AuthProvider>
+  );
+}
 
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="es" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
@@ -65,11 +79,39 @@ function RootShell({ children }: { children: React.ReactNode }) {
   );
 }
 
-function RootComponent() {
-  return (
-    <>
-      <Outlet />
-      <Toaster richColors position="top-right" />
-    </>
-  );
-}
+
+export const Route = createRootRoute({
+  beforeLoad: async ({ location }) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const isAuth = !!session;
+
+    if (!isAuth && location.pathname !== '/login') {
+      throw redirect({
+        to: '/login',
+      });
+    }
+    if (isAuth && location.pathname === '/login') {
+      throw redirect({
+        to: '/',
+      });
+    }
+  },
+  head: () => ({
+    meta: [
+      { charSet: "utf-8" },
+      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { title: "TurnoDental — Gestión" },
+      { name: "description", content: "Sistema de gestión odontológica" },
+      { name: "author", content: "TurnoDental" },
+    ],
+    links: [
+      {
+        rel: "stylesheet",
+        href: appCss,
+      },
+    ],
+  }),
+  shellComponent: RootShell,
+  component: Main,
+  notFoundComponent: NotFoundComponent,
+});

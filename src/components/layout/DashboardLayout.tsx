@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Calendar, Home, Inbox, Users, Stethoscope, Settings, LogOut, Menu, X } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { consultorio } from "@/data/mockData";
 import { cn } from "@/lib/utils";
 
@@ -51,6 +52,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   );
 
   function SidebarContent({ path, onNavigate }: { path: string; onNavigate?: () => void }) {
+    const { signOut } = useAuth();
     return (
       <>
         <div className="px-6 pt-6 pb-4 border-b border-sidebar-border">
@@ -91,14 +93,16 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           })}
         </nav>
         <div className="p-3 border-t border-sidebar-border">
-          <Link
-            to="/"
-            onClick={onNavigate}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm hover:bg-sidebar-accent/60"
+          <button
+            onClick={async () => {
+              if (onNavigate) onNavigate();
+              await signOut();
+            }}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm hover:bg-sidebar-accent/60 text-left"
           >
             <LogOut className="size-4" />
             Cerrar sesión
-          </Link>
+          </button>
         </div>
       </>
     );
