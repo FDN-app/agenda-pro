@@ -2,7 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { Calendar, Home, Inbox, Users, Stethoscope, Settings, LogOut, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { consultorio } from "@/data/mockData";
+import { useConfiguracion } from "@/hooks/useConfiguracion";
 import { cn } from "@/lib/utils";
 
 const items = [
@@ -17,12 +17,13 @@ const items = [
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const { data: config } = useConfiguracion();
 
   return (
     <div className="min-h-screen bg-background flex">
       {/* Sidebar desktop */}
       <aside className="hidden lg:flex w-64 bg-sidebar text-sidebar-foreground flex-col fixed inset-y-0 left-0">
-        <SidebarContent path={path} />
+        <SidebarContent path={path} config={config} />
       </aside>
 
       {/* Sidebar mobile drawer */}
@@ -30,7 +31,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         <div className="lg:hidden fixed inset-0 z-40">
           <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
           <aside className="absolute inset-y-0 left-0 w-64 bg-sidebar text-sidebar-foreground flex flex-col">
-            <SidebarContent path={path} onNavigate={() => setOpen(false)} />
+            <SidebarContent path={path} config={config} onNavigate={() => setOpen(false)} />
           </aside>
         </div>
       )}
@@ -41,7 +42,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           <button onClick={() => setOpen(true)} className="p-2 -ml-2 rounded-md hover:bg-muted">
             {open ? <X className="size-5" /> : <Menu className="size-5" />}
           </button>
-          <div className="font-semibold">TurnoDental</div>
+          <div className="font-semibold">{config?.nombre_consultorio || "TurnoDental"}</div>
         </div>
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1400px] w-full mx-auto">
@@ -51,18 +52,21 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     </div>
   );
 
-  function SidebarContent({ path, onNavigate }: { path: string; onNavigate?: () => void }) {
+  function SidebarContent({ path, config, onNavigate }: { path: string; config: any; onNavigate?: () => void }) {
     const { signOut } = useAuth();
+    const nombre = config?.nombre_consultorio || "TurnoDental";
+    const letra = nombre.charAt(0).toUpperCase();
+
     return (
       <>
         <div className="px-6 pt-6 pb-4 border-b border-sidebar-border">
           <div className="flex items-center gap-2">
             <div className="size-9 rounded-lg bg-sidebar-primary text-sidebar-primary-foreground grid place-items-center font-bold">
-              T
+              {letra}
             </div>
             <div>
-              <div className="font-semibold text-base">TurnoDental</div>
-              <div className="text-xs opacity-70 truncate max-w-[160px]">{consultorio.nombre}</div>
+              <div className="font-semibold text-base">{nombre}</div>
+              <div className="text-xs opacity-70 truncate max-w-[160px]">Panel de gestión</div>
             </div>
           </div>
         </div>
