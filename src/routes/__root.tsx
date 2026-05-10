@@ -28,6 +28,10 @@ function NotFoundComponent() {
   );
 }
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const queryClient = new QueryClient();
+
 function RootComponent() {
   const { loading, user } = useAuth();
   const router = useRouter();
@@ -50,10 +54,10 @@ function RootComponent() {
   }
 
   return (
-    <>
+    <QueryClientProvider client={queryClient}>
       <Outlet />
       <Toaster richColors position="top-right" />
-    </>
+    </QueryClientProvider>
   );
 }
 

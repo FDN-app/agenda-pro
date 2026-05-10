@@ -17,6 +17,8 @@ import { Route as HoyRouteImport } from './routes/hoy'
 import { Route as ConfiguracionRouteImport } from './routes/configuracion'
 import { Route as CalendarioRouteImport } from './routes/calendario'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PacientesIndexRouteImport } from './routes/pacientes.index'
+import { Route as PacientesIdRouteImport } from './routes/pacientes.$id'
 
 const SolicitudesRoute = SolicitudesRouteImport.update({
   id: '/solicitudes',
@@ -58,6 +60,16 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PacientesIndexRoute = PacientesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PacientesRoute,
+} as any)
+const PacientesIdRoute = PacientesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => PacientesRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -65,9 +77,11 @@ export interface FileRoutesByFullPath {
   '/configuracion': typeof ConfiguracionRoute
   '/hoy': typeof HoyRoute
   '/login': typeof LoginRoute
-  '/pacientes': typeof PacientesRoute
+  '/pacientes': typeof PacientesRouteWithChildren
   '/servicios': typeof ServiciosRoute
   '/solicitudes': typeof SolicitudesRoute
+  '/pacientes/$id': typeof PacientesIdRoute
+  '/pacientes/': typeof PacientesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -75,9 +89,10 @@ export interface FileRoutesByTo {
   '/configuracion': typeof ConfiguracionRoute
   '/hoy': typeof HoyRoute
   '/login': typeof LoginRoute
-  '/pacientes': typeof PacientesRoute
   '/servicios': typeof ServiciosRoute
   '/solicitudes': typeof SolicitudesRoute
+  '/pacientes/$id': typeof PacientesIdRoute
+  '/pacientes': typeof PacientesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -86,9 +101,11 @@ export interface FileRoutesById {
   '/configuracion': typeof ConfiguracionRoute
   '/hoy': typeof HoyRoute
   '/login': typeof LoginRoute
-  '/pacientes': typeof PacientesRoute
+  '/pacientes': typeof PacientesRouteWithChildren
   '/servicios': typeof ServiciosRoute
   '/solicitudes': typeof SolicitudesRoute
+  '/pacientes/$id': typeof PacientesIdRoute
+  '/pacientes/': typeof PacientesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -101,6 +118,8 @@ export interface FileRouteTypes {
     | '/pacientes'
     | '/servicios'
     | '/solicitudes'
+    | '/pacientes/$id'
+    | '/pacientes/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -108,9 +127,10 @@ export interface FileRouteTypes {
     | '/configuracion'
     | '/hoy'
     | '/login'
-    | '/pacientes'
     | '/servicios'
     | '/solicitudes'
+    | '/pacientes/$id'
+    | '/pacientes'
   id:
     | '__root__'
     | '/'
@@ -121,6 +141,8 @@ export interface FileRouteTypes {
     | '/pacientes'
     | '/servicios'
     | '/solicitudes'
+    | '/pacientes/$id'
+    | '/pacientes/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -129,7 +151,7 @@ export interface RootRouteChildren {
   ConfiguracionRoute: typeof ConfiguracionRoute
   HoyRoute: typeof HoyRoute
   LoginRoute: typeof LoginRoute
-  PacientesRoute: typeof PacientesRoute
+  PacientesRoute: typeof PacientesRouteWithChildren
   ServiciosRoute: typeof ServiciosRoute
   SolicitudesRoute: typeof SolicitudesRoute
 }
@@ -192,8 +214,36 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pacientes/': {
+      id: '/pacientes/'
+      path: '/'
+      fullPath: '/pacientes/'
+      preLoaderRoute: typeof PacientesIndexRouteImport
+      parentRoute: typeof PacientesRoute
+    }
+    '/pacientes/$id': {
+      id: '/pacientes/$id'
+      path: '/$id'
+      fullPath: '/pacientes/$id'
+      preLoaderRoute: typeof PacientesIdRouteImport
+      parentRoute: typeof PacientesRoute
+    }
   }
 }
+
+interface PacientesRouteChildren {
+  PacientesIdRoute: typeof PacientesIdRoute
+  PacientesIndexRoute: typeof PacientesIndexRoute
+}
+
+const PacientesRouteChildren: PacientesRouteChildren = {
+  PacientesIdRoute: PacientesIdRoute,
+  PacientesIndexRoute: PacientesIndexRoute,
+}
+
+const PacientesRouteWithChildren = PacientesRoute._addFileChildren(
+  PacientesRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -201,7 +251,7 @@ const rootRouteChildren: RootRouteChildren = {
   ConfiguracionRoute: ConfiguracionRoute,
   HoyRoute: HoyRoute,
   LoginRoute: LoginRoute,
-  PacientesRoute: PacientesRoute,
+  PacientesRoute: PacientesRouteWithChildren,
   ServiciosRoute: ServiciosRoute,
   SolicitudesRoute: SolicitudesRoute,
 }
