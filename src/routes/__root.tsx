@@ -2,7 +2,7 @@ import { Outlet, Link, createRootRoute, HeadContent, Scripts, redirect, useRoute
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import appCss from "../styles.css?url";
 
@@ -33,8 +33,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 const queryClient = new QueryClient();
 
 function RootComponent() {
+  const [isMounted, setIsMounted] = useState(false);
   const { loading, user } = useAuth();
   const router = useRouter();
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     // Si cambia el estado de usuario (ej. token expira o login en otra pestaña),
@@ -42,7 +47,8 @@ function RootComponent() {
     router.invalidate();
   }, [user, router]);
 
-  if (loading) {
+  // Si no está montado o está cargando la sesión, mostramos el skeleton
+  if (!isMounted || loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a]">
         <div className="flex flex-col items-center gap-4">
@@ -75,7 +81,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
       <head>
         <HeadContent />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         {children}
         <Scripts />
       </body>
