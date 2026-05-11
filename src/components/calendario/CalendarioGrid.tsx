@@ -92,7 +92,7 @@ export function CalendarioGrid({
 
       {/* Cuerpo del Grid (Horas y Celdas) */}
       <ScrollArea className="flex-1 bg-card">
-        <div className="flex min-h-[800px] pt-3 pb-6">
+        <div className="flex min-h-[800px] pb-6">
           {/* Columna de Horas */}
           <div className="w-16 sm:w-20 shrink-0 border-r border-border flex flex-col relative z-20 bg-card">
             {franjas.map((franja, i) => (
@@ -104,7 +104,7 @@ export function CalendarioGrid({
                 )}
               >
                 {franja.etiquetaVisible && (
-                  <span className="text-[11px] sm:text-xs font-medium text-muted-foreground bg-card px-1 absolute top-0 -translate-y-1/2 right-2 sm:right-3 whitespace-nowrap leading-none z-10">
+                  <span className="text-[11px] sm:text-xs font-medium text-muted-foreground bg-card px-1 absolute top-0 right-2 sm:right-3 whitespace-nowrap leading-none z-10">
                     {franja.hora}
                   </span>
                 )}
