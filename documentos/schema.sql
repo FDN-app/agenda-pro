@@ -180,3 +180,45 @@ VALUES (
   '[{"dia": "Lunes", "inicio": "09:00", "fin": "18:00", "activo": true}, {"dia": "Martes", "inicio": "09:00", "fin": "18:00", "activo": true}, {"dia": "Miercoles", "inicio": "09:00", "fin": "18:00", "activo": true}, {"dia": "Jueves", "inicio": "09:00", "fin": "18:00", "activo": true}, {"dia": "Viernes", "inicio": "09:00", "fin": "18:00", "activo": true}]'::jsonb,
   '{"confirmacion": "Hola {{nombre}}, tu turno para {{servicio}} el {{fecha}} a las {{hora}} está confirmado.", "recordatorio": "Hola {{nombre}}, te recordamos tu turno mañana a las {{hora}}."}'::jsonb
 );
+
+-- ==========================================
+-- 6. Fase 4: Disponibilidades
+-- ==========================================
+
+-- Tabla: disponibilidades
+CREATE TABLE IF NOT EXISTS public.disponibilidades (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  inicio_at TIMESTAMPTZ NOT NULL,
+  fin_at TIMESTAMPTZ NOT NULL,
+  notas TEXT NULL,
+  created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+  deleted_at TIMESTAMPTZ NULL,
+  CHECK (fin_at > inicio_at)
+);
+
+-- Trigger (Idempotente vía DROP previo)
+DROP TRIGGER IF EXISTS set_updated_at_disponibilidades ON public.disponibilidades;
+CREATE TRIGGER set_updated_at_disponibilidades 
+BEFORE UPDATE ON public.disponibilidades 
+FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+
+-- Índices
+CREATE INDEX IF NOT EXISTS idx_disponibilidades_inicio_at ON public.disponibilidades(inicio_at);
+CREATE INDEX IF NOT EXISTS idx_disponibilidades_activos ON public.disponibilidades(inicio_at) WHERE deleted_at IS NULL;
+
+-- Seguridad y RLS
+ALTER TABLE public.disponibilidades ENABLE ROW LEVEL SECURITY;
+
+-- Políticas (Idempotentes)
+DROP POLICY IF EXISTS "disponibilidades_select_auth" ON public.disponibilidades;
+CREATE POLICY "disponibilidades_select_auth" ON public.disponibilidades FOR SELECT TO authenticated USING (true);
+
+DROP POLICY IF EXISTS "disponibilidades_insert_admin" ON public.disponibilidades;
+CREATE POLICY "disponibilidades_insert_admin" ON public.disponibilidades FOR INSERT TO authenticated WITH CHECK (public.es_admin());
+
+DROP POLICY IF EXISTS "disponibilidades_update_admin" ON public.disponibilidades;
+CREATE POLICY "disponibilidades_update_admin" ON public.disponibilidades FOR UPDATE TO authenticated USING (public.es_admin()) WITH CHECK (public.es_admin());
+
+DROP POLICY IF EXISTS "disponibilidades_delete_admin" ON public.disponibilidades;
+CREATE POLICY "disponibilidades_delete_admin" ON public.disponibilidades FOR DELETE TO authenticated USING (public.es_admin());
