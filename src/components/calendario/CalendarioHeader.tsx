@@ -2,14 +2,16 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { formatoRangoSemana, finDeSemana } from "@/lib/calendario/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { BotonCopiarSemana } from "./BotonCopiarSemana";
 
 interface CalendarioHeaderProps {
   inicioSemana: Date;
+  cantidadDisponibilidades: number;
   onCambiarSemana: (nuevoInicio: Date) => void;
   onCrearTurno: () => void;
 }
 
-export function CalendarioHeader({ inicioSemana, onCambiarSemana, onCrearTurno }: CalendarioHeaderProps) {
+export function CalendarioHeader({ inicioSemana, cantidadDisponibilidades, onCambiarSemana, onCrearTurno }: CalendarioHeaderProps) {
   const finSemana = finDeSemana(inicioSemana);
   const rangoTexto = formatoRangoSemana(inicioSemana, finSemana);
   const isMobile = useIsMobile();
@@ -50,6 +52,10 @@ export function CalendarioHeader({ inicioSemana, onCambiarSemana, onCrearTurno }
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
+          <BotonCopiarSemana 
+            semanaActualInicio={inicioSemana} 
+            cantidadActual={cantidadDisponibilidades} 
+          />
           <Button 
             variant="outline" 
             className="flex-1 sm:flex-none h-10"

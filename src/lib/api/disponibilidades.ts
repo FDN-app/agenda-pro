@@ -1,11 +1,30 @@
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/lib/database.types';
 
-// Omitimos la importación de 'Database' exacta hasta que se regenere el tipo,
-// pero definimos los tipos basándonos en cómo serán.
-export type Disponibilidad = Database['public']['Tables']['disponibilidades']['Row'];
+type DisponibilidadRow = Database['public']['Tables']['disponibilidades']['Row'];
 export type DisponibilidadInsert = Database['public']['Tables']['disponibilidades']['Insert'];
 export type DisponibilidadUpdate = Database['public']['Tables']['disponibilidades']['Update'];
+
+export interface Disponibilidad {
+  id: string;
+  inicio_at: Date;
+  fin_at: Date;
+  notas: string | null;
+  created_at: Date;
+  updated_at: Date;
+  deleted_at: Date | null;
+}
+
+function deserializarDisponibilidad(row: DisponibilidadRow): Disponibilidad {
+  return {
+    ...row,
+    inicio_at: new Date(row.inicio_at),
+    fin_at: new Date(row.fin_at),
+    created_at: new Date(row.created_at),
+    updated_at: new Date(row.updated_at),
+    deleted_at: row.deleted_at ? new Date(row.deleted_at) : null,
+  };
+}
 
 export async function listarDisponibilidadesPorRango(desde: Date, hasta: Date): Promise<Disponibilidad[]> {
   const { data, error } = await supabase
@@ -21,7 +40,7 @@ export async function listarDisponibilidadesPorRango(desde: Date, hasta: Date): 
     throw new Error('No se pudieron cargar las disponibilidades.');
   }
 
-  return data as Disponibilidad[];
+  return (data as DisponibilidadRow[]).map(deserializarDisponibilidad);
 }
 
 export async function crearDisponibilidad(input: { inicio_at: Date; fin_at: Date; notas?: string | null }): Promise<Disponibilidad> {
@@ -40,7 +59,7 @@ export async function crearDisponibilidad(input: { inicio_at: Date; fin_at: Date
     throw new Error('No se pudo crear la disponibilidad.');
   }
 
-  return data as Disponibilidad;
+  return deserializarDisponibilidad(data as DisponibilidadRow);
 }
 
 export async function actualizarDisponibilidad(
@@ -65,7 +84,7 @@ export async function actualizarDisponibilidad(
     throw new Error('No se pudo actualizar la disponibilidad.');
   }
 
-  return data as Disponibilidad;
+  return deserializarDisponibilidad(data as DisponibilidadRow);
 }
 
 export async function eliminarDisponibilidad(id: string): Promise<void> {
@@ -120,10 +139,10 @@ export async function copiarDisponibilidadesDeSemana(opciones: {
   const diffDays = Math.round((semanaDestinoInicio.getTime() - semanaOrigenInicio.getTime()) / (1000 * 60 * 60 * 24));
 
   const nuevasAInsertar = origen.map(d => {
-    const nInicio = new Date(d.inicio_at);
+    const nInicio = new Date(d.inicio_at); // d.inicio_at is Date!
     nInicio.setDate(nInicio.getDate() + diffDays);
     
-    const nFin = new Date(d.fin_at);
+    const nFin = new Date(d.fin_at); // d.fin_at is Date!
     nFin.setDate(nFin.getDate() + diffDays);
     
     return {
@@ -139,7 +158,7 @@ export async function copiarDisponibilidadesDeSemana(opciones: {
     finales = nuevasAInsertar.filter(nueva => {
       // Buscar coincidencia exacta en destino (mismo inicio y fin)
       return !destino.some(existente => 
-        existente.inicio_at === nueva.inicio_at && existente.fin_at === nueva.fin_at
+        existente.inicio_at.toISOString() === nueva.inicio_at && existente.fin_at.toISOString() === nueva.fin_at
       );
     });
   }

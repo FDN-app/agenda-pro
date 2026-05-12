@@ -6,6 +6,7 @@ import { inicioDeSemana, mismoDia, finDeSemana } from "@/lib/calendario/utils";
 import { CalendarioHeader } from "@/components/calendario/CalendarioHeader";
 import { CalendarioGrid } from "@/components/calendario/CalendarioGrid";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useDisponibilidadesPorRango } from "@/hooks/useDisponibilidades";
 
 export const Route = createFileRoute("/calendario")({
   head: () => ({ meta: [{ title: "Calendario — TurnoDental" }] }),
@@ -20,7 +21,6 @@ function CalendarioPage() {
   const [inicioSemana, setInicioSemana] = useState<Date>(() => inicioDeSemana(hoy));
   
   // Estado local para el día visible en mobile
-  // Arranca en hoy si hoy está en la semana actual, sino arranca en el lunes de esa semana
   const [diaVisibleMobile, setDiaVisibleMobile] = useState<Date>(() => {
     const l = inicioDeSemana(hoy);
     const s = finDeSemana(hoy);
@@ -30,13 +30,10 @@ function CalendarioPage() {
     return l;
   });
 
-  // Efecto para actualizar el diaVisibleMobile cuando cambia la semana
-  // Si en la nueva semana está "hoy", lo seleccionamos. Sino, seleccionamos el lunes.
   useEffect(() => {
     const l = inicioSemana;
     const s = finDeSemana(inicioSemana);
     
-    // Solo si el día visible actual NO pertenece a la nueva semana mostrada
     if (diaVisibleMobile < l || diaVisibleMobile > s) {
       if (hoy >= l && hoy <= s) {
         setDiaVisibleMobile(hoy);
@@ -44,7 +41,11 @@ function CalendarioPage() {
         setDiaVisibleMobile(l);
       }
     }
-  }, [inicioSemana]); // Se quita diaVisibleMobile y hoy de las dependencias para evitar ciclos
+  }, [inicioSemana]);
+
+  // Cargar disponibilidades de la semana visible
+  const finSemanaVisible = finDeSemana(inicioSemana);
+  const { data: disponibilidades = [] } = useDisponibilidadesPorRango(inicioSemana, finSemanaVisible);
 
   const handleCrearTurno = () => {
     toast.info("Próximamente: Crear turnos desde el calendario");
@@ -59,6 +60,7 @@ function CalendarioPage() {
       <div className="flex flex-col h-[calc(100vh-8rem)] min-h-[500px]">
         <CalendarioHeader 
           inicioSemana={inicioSemana}
+          cantidadDisponibilidades={disponibilidades.length}
           onCambiarSemana={handleCambiarSemana}
           onCrearTurno={handleCrearTurno}
         />
@@ -69,6 +71,7 @@ function CalendarioPage() {
             diaVisibleMobile={diaVisibleMobile}
             setDiaVisibleMobile={setDiaVisibleMobile}
             isMobile={isMobile}
+            disponibilidades={disponibilidades}
           />
         </div>
       </div>
