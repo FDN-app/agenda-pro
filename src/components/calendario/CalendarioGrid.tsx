@@ -11,10 +11,12 @@ import { IndicadorHoraActual } from "./IndicadorHoraActual";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { Disponibilidad } from "@/lib/api/disponibilidades";
+import type { Turno } from "@/lib/api/turnos";
 import { useCrearDisponibilidad, useActualizarDisponibilidad, useEliminarDisponibilidad } from "@/hooks/useDisponibilidades";
 import { useDragFranja, GhostFranja } from "@/hooks/useDragFranja";
 import { FranjaDisponibilidad } from "./FranjaDisponibilidad";
 import { ModalFranjaMobile } from "./ModalFranjaMobile";
+import { TurnoBloque, calcularColumnasOverlap } from "./TurnoBloque";
 
 interface CalendarioGridProps {
   inicioSemana: Date;
@@ -22,6 +24,9 @@ interface CalendarioGridProps {
   setDiaVisibleMobile: (d: Date) => void;
   isMobile: boolean;
   disponibilidades?: Disponibilidad[];
+  turnos?: Turno[];
+  onClickFranjaParaTurno?: (fechaInicio: Date) => void;
+  onClickTurno?: (turno: Turno) => void;
 }
 
 export function CalendarioGrid({ 
@@ -29,7 +34,10 @@ export function CalendarioGrid({
   diaVisibleMobile, 
   setDiaVisibleMobile, 
   isMobile,
-  disponibilidades = []
+  disponibilidades = [],
+  turnos = [],
+  onClickFranjaParaTurno,
+  onClickTurno,
 }: CalendarioGridProps) {
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => setIsMounted(true), []);
@@ -38,7 +46,7 @@ export function CalendarioGrid({
   const franjas = useMemo(() => franjasHorarias(), []);
   const hoy = new Date();
   
-  // Mapeo por día
+  // Mapeo por día — disponibilidades
   const disponibilidadesPorDia = useMemo(() => {
     const map = new Map<string, Disponibilidad[]>();
     disponibilidades.forEach(d => {
@@ -49,11 +57,32 @@ export function CalendarioGrid({
     return map;
   }, [disponibilidades]);
 
+  // Mapeo por día — turnos
+  const turnosPorDia = useMemo(() => {
+    const map = new Map<string, Turno[]>();
+    turnos.forEach(t => {
+      const key = t.inicio_at.toISOString().split('T')[0];
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(t);
+    });
+    return map;
+  }, [turnos]);
+
+  // Columnas de overlap pre-calculadas para todos los turnos
+  const overlapColumnas = useMemo(() => {
+    const resultado = new Map<string, { columnaIndex: number; totalColumnas: number }>();
+    turnosPorDia.forEach((turnosDelDia) => {
+      const parcial = calcularColumnasOverlap(turnosDelDia);
+      parcial.forEach((val, key) => resultado.set(key, val));
+    });
+    return resultado;
+  }, [turnosPorDia]);
+
   const columnasVisibles = isMobile 
     ? [dias.find(d => isMounted ? mismoDia(d, diaVisibleMobile) : false) || dias[0]] 
     : dias;
 
-  // --- MUTACIONES ---
+  // --- MUTACIONES DE DISPONIBILIDADES ---
   const crearMutation = useCrearDisponibilidad();
   const actualizarMutation = useActualizarDisponibilidad();
   const eliminarMutation = useEliminarDisponibilidad();
@@ -64,7 +93,7 @@ export function CalendarioGrid({
     return false;
   };
 
-  // --- SOLAPAMIENTO ---
+  // --- SOLAPAMIENTO DE DISPONIBILIDADES ---
   const hasOverlap = useCallback((dia: Date, inicioMin: number, finMin: number, omitirId?: string) => {
     return disponibilidades.some(d => {
       if (d.id === omitirId) return false;
@@ -77,7 +106,7 @@ export function CalendarioGrid({
     });
   }, [disponibilidades]);
 
-  // --- DESKTOP DRAG & DROP ---
+  // --- DESKTOP DRAG & DROP (disponibilidades) ---
   const handleDragEnd = useCallback((ghost: GhostFranja) => {
     if (ghost.inicio_minutos >= ghost.fin_minutos) return;
     
@@ -107,7 +136,20 @@ export function CalendarioGrid({
     }
   };
 
-  // --- MOBILE MODAL ---
+  // --- CLIC EN FRANJA PARA CREAR TURNO (desktop) ---
+  const handleFranjaClickParaTurno = useCallback((dia: Date, minutosDelClic: number) => {
+    if (!onClickFranjaParaTurno) return;
+    const fecha = new Date(dia);
+    fecha.setHours(Math.floor(minutosDelClic / 60), minutosDelClic % 60, 0, 0);
+    onClickFranjaParaTurno(fecha);
+  }, [onClickFranjaParaTurno]);
+
+  // --- CLIC EN TURNO ---
+  const handleClickTurno = useCallback((turno: Turno) => {
+    if (onClickTurno) onClickTurno(turno);
+  }, [onClickTurno]);
+
+  // --- MOBILE MODAL (disponibilidades) ---
   const [modalState, setModalState] = useState<{
     open: boolean;
     dia: Date | null;
@@ -241,6 +283,7 @@ export function CalendarioGrid({
             {columnasVisibles.map(dia => {
               const isToday = isMounted ? mismoDia(dia, hoy) : false;
               const franjasDelDia = disponibilidadesPorDia.get(dia.toISOString().split('T')[0]) || [];
+              const turnosDelDia = turnosPorDia.get(dia.toISOString().split('T')[0]) || [];
               const isGhostDia = ghost && mismoDia(ghost.dia, dia);
               
               return (
@@ -289,11 +332,12 @@ export function CalendarioGrid({
                         onDelete={handleDelete}
                         onEdit={(id) => handleMobileEditClick(dia, id, startMin, endMin)}
                         onResizeStart={(e, id, s, f) => handlePointerDown(e, dia, 'redimensionar', { id, inicio_minutos: s, fin_minutos: f })}
+                        onClickParaTurno={(minutos) => handleFranjaClickParaTurno(dia, minutos)}
                       />
                     );
                   })}
 
-                  {/* Render de ghost (creación o redimensión) */}
+                  {/* Render de ghost (creación o redimensión de disponibilidad) */}
                   {isGhostDia && (
                     <FranjaDisponibilidad
                       id="ghost"
@@ -304,6 +348,21 @@ export function CalendarioGrid({
                       ghostAction={ghost.action}
                     />
                   )}
+
+                  {/* Render de turnos — ENCIMA de disponibilidades (z-30) */}
+                  {turnosDelDia.map(turno => {
+                    const overlapInfo = overlapColumnas.get(turno.id);
+                    return (
+                      <TurnoBloque
+                        key={turno.id}
+                        turno={turno}
+                        onClick={handleClickTurno}
+                        isMobile={isMobile}
+                        columnaIndex={overlapInfo?.columnaIndex}
+                        totalColumnas={overlapInfo?.totalColumnas}
+                      />
+                    );
+                  })}
                 </div>
               );
             })}

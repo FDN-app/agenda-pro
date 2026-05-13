@@ -47,6 +47,7 @@ import {
   type Turno,
   type EstadoTurno,
 } from '@/lib/api/turnos';
+import { mismoDia } from '@/lib/calendario/utils';
 
 // ---------- Props ----------
 
@@ -57,10 +58,10 @@ interface ModalTurnoProps {
   fechaInicioSugerida?: Date;
   /** Si está presente, el modal funciona en modo editar */
   turnoExistente?: Turno;
-  /** Franjas de disponibilidad del día seleccionado, para validación */
-  disponibilidadesDelDia?: { inicio_at: Date; fin_at: Date }[];
-  /** Turnos del día seleccionado, para validación de overlap */
-  turnosDelDia?: Turno[];
+  /** Franjas de disponibilidad de la semana visible (se filtran internamente por fecha). */
+  disponibilidades?: { inicio_at: Date; fin_at: Date }[];
+  /** Turnos de la semana visible (se filtran internamente por fecha). */
+  turnos?: Turno[];
 }
 
 // ---------- Helpers locales ----------
@@ -124,8 +125,8 @@ export function ModalTurno({
   onOpenChange,
   fechaInicioSugerida,
   turnoExistente,
-  disponibilidadesDelDia = [],
-  turnosDelDia = [],
+  disponibilidades = [],
+  turnos = [],
 }: ModalTurnoProps) {
   const modoEditar = !!turnoExistente;
   const horasDisponibles = useMemo(() => opcionesHora(), []);
@@ -161,6 +162,16 @@ export function ModalTurno({
   const inicioMinutos = slotAMinutos(horaInicio);
   const finMinutos = inicioMinutos + duracionMin;
   const horaFinLabel = minutosAHora(finMinutos);
+
+  // --- Filtrado por fecha seleccionada (se actualiza cuando el usuario cambia la fecha) ---
+  const disponibilidadesDelDia = useMemo(
+    () => disponibilidades.filter(d => mismoDia(d.inicio_at, fecha)),
+    [disponibilidades, fecha]
+  );
+  const turnosDelDia = useMemo(
+    () => turnos.filter(t => mismoDia(t.inicio_at, fecha)),
+    [turnos, fecha]
+  );
 
   // --- Reset al abrir ---
   useEffect(() => {

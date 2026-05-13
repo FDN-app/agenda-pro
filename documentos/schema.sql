@@ -51,7 +51,7 @@ CREATE TABLE public.turnos (
   inicio_at TIMESTAMPTZ NOT NULL,
   fin_at TIMESTAMPTZ NOT NULL,
   notas TEXT NULL,
-  estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'verificado', 'cancelado', 'no-show')),
+  estado TEXT NOT NULL DEFAULT 'programado' CHECK (estado IN ('programado', 'confirmado', 'cumplido', 'cancelado', 'ausente')),
   created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT now() NOT NULL,
   deleted_at TIMESTAMPTZ NULL,

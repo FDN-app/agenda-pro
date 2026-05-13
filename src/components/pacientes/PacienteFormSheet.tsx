@@ -12,8 +12,24 @@ import { Loader2 } from "lucide-react";
 import { useCrearPaciente, useActualizarPaciente } from "@/hooks/usePacientes";
 import type { Paciente, EstadoPaciente, PacienteInsert } from "@/lib/api/pacientes";
 
-export function PacienteFormSheet({ children, mode, paciente }: { children: React.ReactNode; mode: "create" | "edit"; paciente?: Paciente }) {
-  const [open, setOpen] = useState(false);
+interface PacienteFormSheetProps {
+  /** Trigger element — required for uncontrolled mode, omitted for controlled mode. */
+  children?: React.ReactNode;
+  mode: "create" | "edit";
+  paciente?: Paciente;
+  /** Controlled mode: open state managed by parent. */
+  open?: boolean;
+  /** Controlled mode: callback when open state changes. */
+  onOpenChange?: (open: boolean) => void;
+  /** Called with the newly created Paciente after successful creation. */
+  onPacienteCreado?: (paciente: Paciente) => void;
+}
+
+export function PacienteFormSheet({ children, mode, paciente, open: controlledOpen, onOpenChange: controlledOnOpenChange, onPacienteCreado }: PacienteFormSheetProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = isControlled ? controlledOnOpenChange! : setInternalOpen;
   const [nombre, setNombre] = useState("");
   const [apellido, setApellido] = useState("");
   const [telefono, setTelefono] = useState("");
@@ -69,8 +85,9 @@ export function PacienteFormSheet({ children, mode, paciente }: { children: Reac
 
     if (mode === "create") {
       crear(data, {
-        onSuccess: () => {
+        onSuccess: (nuevoPaciente) => {
           toast.success("Paciente creado");
+          onPacienteCreado?.(nuevoPaciente);
           setOpen(false);
         },
         onError: (err) => {
@@ -95,9 +112,11 @@ export function PacienteFormSheet({ children, mode, paciente }: { children: Reac
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        {children}
-      </SheetTrigger>
+      {children && (
+        <SheetTrigger asChild>
+          {children}
+        </SheetTrigger>
+      )}
       <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
         <SheetHeader>
           <SheetTitle>{mode === "create" ? "Nuevo paciente" : "Editar paciente"}</SheetTitle>

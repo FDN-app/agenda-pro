@@ -14,6 +14,7 @@ interface FranjaDisponibilidadProps {
   onDelete?: (id: string) => void;
   onEdit?: (id: string) => void; // Para mobile
   onResizeStart?: (e: React.PointerEvent, id: string, startMin: number, endMin: number) => void;
+  onClickParaTurno?: (minutosDelClic: number) => void; // Desktop: clic para crear turno
   isSaving?: boolean;
 }
 
@@ -38,8 +39,21 @@ export function FranjaDisponibilidad({
   onDelete,
   onEdit,
   onResizeStart,
+  onClickParaTurno,
   isSaving
 }: FranjaDisponibilidadProps) {
+  // Desktop: clic en el cuerpo de la franja = crear turno en esa posición
+  const handleFranjaClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (isMobile || isGhost || !onClickParaTurno) return;
+    // Calcular minutos desde la posición Y del clic dentro de la franja
+    const rect = e.currentTarget.getBoundingClientRect();
+    const yRelativo = e.clientY - rect.top;
+    const fraccion = yRelativo / rect.height;
+    const duracionFranja = fin_minutos - inicio_minutos;
+    const minutosDelClic = inicio_minutos + Math.floor((fraccion * duracionFranja) / 15) * 15;
+    e.stopPropagation();
+    onClickParaTurno(minutosDelClic);
+  };
   return (
     <div
       className={cn(
@@ -51,7 +65,13 @@ export function FranjaDisponibilidad({
         isMobile && !isGhost ? "cursor-pointer" : ""
       )}
       style={getFranjaStyles(inicio_minutos, fin_minutos)}
-      onClick={isMobile && !isGhost && onEdit ? () => onEdit(id) : undefined}
+      onClick={(e) => {
+        if (isMobile && !isGhost && onEdit) {
+          onEdit(id);
+        } else if (!isMobile && !isGhost) {
+          handleFranjaClick(e);
+        }
+      }}
     >
       {/* Botón Eliminar (solo desktop hover) */}
       {!isMobile && !isGhost && onDelete && (
