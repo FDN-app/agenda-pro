@@ -92,6 +92,10 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 export const Route = createRootRoute({
   beforeLoad: async ({ location }) => {
+    // En SSR (Cloudflare Worker) no hay localStorage ni sesión.
+    // Skipear la verificación de auth en server para evitar el lock timeout.
+    if (typeof window === 'undefined') return;
+
     const { data: { session } } = await supabase.auth.getSession();
     const isAuth = !!session;
 
