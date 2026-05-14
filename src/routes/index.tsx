@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Stethoscope } from "lucide-react";
+import { LogoTurnoDental } from "@/components/ui/LogoTurnoDental";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -25,7 +26,7 @@ function Index() {
     <div className="min-h-screen grid lg:grid-cols-2 bg-background">
       <div className="hidden lg:flex flex-col justify-between p-12 bg-sidebar text-sidebar-foreground">
         <div className="flex items-center gap-3">
-          <div className="size-10 rounded-xl bg-sidebar-primary text-sidebar-primary-foreground grid place-items-center font-bold text-lg">T</div>
+          <LogoTurnoDental size={36} />
           <span className="text-xl font-semibold">TurnoDental</span>
         </div>
         <div>
@@ -42,7 +43,7 @@ function Index() {
       <div className="flex items-center justify-center p-6 sm:p-12">
         <div className="w-full max-w-sm">
           <div className="lg:hidden flex items-center gap-3 mb-8">
-            <div className="size-10 rounded-xl bg-primary text-primary-foreground grid place-items-center font-bold">T</div>
+            <LogoTurnoDental size={36} />
             <span className="text-xl font-semibold">TurnoDental</span>
           </div>
           <h2 className="text-2xl font-semibold mb-2 flex items-center gap-2">

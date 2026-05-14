@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Loader2, ShieldCheck } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { LogoTurnoDental } from "@/components/ui/LogoTurnoDental";
 
 import { supabase } from "@/lib/supabase";
 import { redirect } from "@tanstack/react-router";
@@ -58,7 +59,7 @@ function LoginPage() {
         
         <CardHeader className="space-y-3 pt-10 text-center">
           <div className="mx-auto w-14 h-14 rounded-2xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 group-hover:scale-110 transition-transform duration-500">
-            <ShieldCheck className="size-8 text-indigo-400" />
+            <LogoTurnoDental size={36} />
           </div>
           <div className="space-y-1">
             <CardTitle className="text-3xl font-bold tracking-tight text-white">TurnoDental</CardTitle>

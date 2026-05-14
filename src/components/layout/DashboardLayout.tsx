@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useConfiguracion } from "@/hooks/useConfiguracion";
 import { cn } from "@/lib/utils";
+import { LogoTurnoDental } from "@/components/ui/LogoTurnoDental";
 
 const items = [
   { to: "/hoy",            label: "Hoy",            icon: Home },
@@ -61,9 +62,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       <>
         <div className="px-6 pt-6 pb-4 border-b border-sidebar-border">
           <div className="flex items-center gap-2">
-            <div className="size-9 rounded-lg bg-sidebar-primary text-sidebar-primary-foreground grid place-items-center font-bold">
-              {letra}
-            </div>
+            <LogoTurnoDental size={32} />
             <div>
               <div className="font-semibold text-base">{nombre}</div>
               <div className="text-xs opacity-70 truncate max-w-[160px]">Panel de gestión</div>
